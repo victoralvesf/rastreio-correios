@@ -6,22 +6,25 @@ class TrackingController {
   async index(req, res) {
     const trackingCode = req.trackingCode;
 
-    // const response = axios.get(`https://linkcorreios.com.br/?id=${trackingCode}`);
     await axios.get(`https://linkcorreios.com.br/?id=${trackingCode}`)
       .then((response) => {
         if(response.status === 200) {
           const html = response.data;
-          const $ = cheerio.load(html);
-
-          const headers = [];
-
-          $('.table tbody tr').each(function(i, item) {
-            header[i] = {
-              date: $(this).find('td').text(),
+          const $ = cheerio.load(html, {
+            xml: {
+              normalizeWhitespace: true,
             }
           });
 
-          return res.json(headers);
+          const header = [];
+
+          $('table tbody tr').each(function(i, item) {
+            header[i] = {
+              date: $(this).text().trim(),
+            }
+          });
+
+          return res.json(header);
         }
       }, (error) => {
           console.log(err)
