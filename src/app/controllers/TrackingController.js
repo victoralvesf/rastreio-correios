@@ -5,8 +5,8 @@ const fs = require('fs');
 class TrackingController {
   async index(req, res) {
     const trackingCode = req.trackingCode;
-
-    await axios.get(`https://linkcorreios.com.br/?id=${trackingCode}`)
+    
+    await axios.get(`https://rastreamentocorreios.info/consulta/${trackingCode}`)
       .then((response) => {
         if(response.status === 200) {
           const html = response.data;
@@ -18,13 +18,24 @@ class TrackingController {
 
           const header = [];
 
-          $('table tbody tr').each(function(i, item) {
+          const object = $('.container-fluid h1').text().split('Correios')[1];
+
+          $('.container-fluid ul li').each(function(i, item) {
             header[i] = {
-              date: $(this).text().trim(),
+              date: $(this).find('span').text().trim(),
+              status: $(this).find('b').text().trim(),
+              details: {
+                from: $(this).find('div').text().split('Para')[0],
+                to: $(this).find('div').text().split('Para')[1] ? 'Para' + $(this).find('div').text().split('Para')[1] : '',
+              }
             }
           });
 
-          return res.json(header);
+          return res.json({
+            status: true,
+            object,
+            header
+          });
         }
       }, (error) => {
           console.log(err)
