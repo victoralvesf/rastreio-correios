@@ -1,6 +1,5 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const fs = require('fs');
 
 class TrackingController {
   async index(req, res) {
@@ -16,29 +15,60 @@ class TrackingController {
             }
           });
 
-          const header = [];
+          let hasError = $('div .alert.alert-warning p').text();
+          if (hasError) {
+            hasError = hasError.split('.');
+            return res.status(404).json({
+              success: false,
+              response: `${hasError[0]}.${hasError[1]}. ${hasError[2]}.`
+            })
+          }
 
-          const object = $('.container-fluid h1').text().split('Correios')[1];
+          const modality = $('.container-fluid h1').text().split('(')[1].split(')')[0].trim();
+          const trackingCode = $('.container-fluid h1').text().split('Correios')[1].split('(')[0].trim();
+          const timeline = [];
 
           $('.container-fluid ul li').each(function(i, item) {
-            header[i] = {
-              date: $(this).find('span').text().trim(),
-              status: $(this).find('b').text().trim(),
+            var status = $(this).find('b').text().split('Entrega');
+
+            if(status.length > 1) {
+              status = `${status[0]} - Entrega${status[1]}`;
+            } else {
+              status = status[0];
+            }
+
+            const date = $(this).find('span').text().trim();
+
+            let details = $(this).find('div').text().split('De');
+            details = details[details.length - 1].split('Para');
+
+            const from = details[0] ? details[0].trim() : details[1].trim();
+            const to = details[1] ? details[1].trim() : '';
+
+            timeline[i] = {
+              date,
+              status,
               details: {
-                from: $(this).find('div').text().split('Para')[0],
-                to: $(this).find('div').text().split('Para')[1] ? 'Para' + $(this).find('div').text().split('Para')[1] : '',
+                from,
+                to
               }
             }
           });
 
           return res.json({
-            status: true,
-            object,
-            header
+            success: true,
+            response: {
+              modality,
+              trackingCode,
+              timeline
+            }
           });
         }
       }, (error) => {
-          console.log(err)
+          return res.status(500).json({
+            success: false,
+            response: 'Não foi possível atender a solicitação no momento, tente novamente mais tarde.'
+          })
         }
       );
     
