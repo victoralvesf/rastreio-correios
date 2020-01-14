@@ -35,6 +35,13 @@ class TrackingController {
               status = `${status[0]} - Entrega${status[1]}`;
             } else {
               status = status[0];
+              status = status.split('Sujeito');
+
+              if (status.length > 1) {
+                status = `${status[0]} - Sujeito${status[1]}`;
+              } else {
+                status = status[0];
+              }
             }
 
             const date = $(this).find('span').text().trim();
